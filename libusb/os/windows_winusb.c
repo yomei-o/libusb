@@ -1392,11 +1392,24 @@ static int set_composite_interface(struct libusb_context *ctx, struct libusb_dev
 	priv->usb_interface[interface_number].sub_api = sub_api;
 
 	//yomei
-	int ii = interface_number + 1;
-	priv->usb_interface[ii].path = malloc(strlen(dev_interface_path) + 2);
-	strcpy(priv->usb_interface[ii].path, dev_interface_path);
-	priv->usb_interface[ii].apib = &usb_api_backend[api];
-	priv->usb_interface[ii].sub_api = sub_api;
+#if 0
+	{
+		int ii = interface_number + 1;
+		priv->usb_interface[ii].path = malloc(strlen(dev_interface_path) + 2);
+		strcpy(priv->usb_interface[ii].path, dev_interface_path);
+		priv->usb_interface[ii].apib = &usb_api_backend[api];
+		priv->usb_interface[ii].sub_api = sub_api;
+	}
+#endif
+#if 1
+	{
+		int ii;
+		for (ii = 1; ii < USB_MAXINTERFACES; ii++) {
+			priv->usb_interface[ii].apib = &usb_api_backend[api];
+			priv->usb_interface[ii].sub_api = sub_api;
+		}
+	}
+#endif
 
 	if ((api == USB_API_HID) && (priv->hid == NULL)) {
 		priv->hid = calloc(1, sizeof(struct hid_device_priv));

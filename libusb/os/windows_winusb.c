@@ -1390,6 +1390,14 @@ static int set_composite_interface(struct libusb_context *ctx, struct libusb_dev
 	priv->usb_interface[interface_number].path = dev_interface_path;
 	priv->usb_interface[interface_number].apib = &usb_api_backend[api];
 	priv->usb_interface[interface_number].sub_api = sub_api;
+
+	//yomei
+	int ii = interface_number + 1;
+	priv->usb_interface[ii].path = malloc(strlen(dev_interface_path) + 2);
+	strcpy(priv->usb_interface[ii].path, dev_interface_path);
+	priv->usb_interface[ii].apib = &usb_api_backend[api];
+	priv->usb_interface[ii].sub_api = sub_api;
+
 	if ((api == USB_API_HID) && (priv->hid == NULL)) {
 		priv->hid = calloc(1, sizeof(struct hid_device_priv));
 		if (priv->hid == NULL)
@@ -2562,7 +2570,11 @@ static int winusbx_claim_interface(int sub_api, struct libusb_device_handle *dev
 	struct libusb_context *ctx = HANDLE_CTX(dev_handle);
 	struct winusb_device_handle_priv *handle_priv = get_winusb_device_handle_priv(dev_handle);
 	struct winusb_device_priv *priv = usbi_get_device_priv(dev_handle->dev);
-	bool is_using_usbccgp = (priv->apib->id == USB_API_COMPOSITE);
+	
+	//yomei
+	//bool is_using_usbccgp = (priv->apib->id == USB_API_COMPOSITE);
+	bool is_using_usbccgp = false;
+	
 	HDEVINFO dev_info;
 	char *dev_interface_path = NULL;
 	char *dev_interface_path_guid_start;
@@ -2666,7 +2678,20 @@ static int winusbx_claim_interface(int sub_api, struct libusb_device_handle *dev
 				return LIBUSB_ERROR_ACCESS;
 			}
 		}
+		
+		//yomei
+		CloseHandle(handle_priv->interface_handle[iface].dev_handle);
+
 		handle_priv->interface_handle[iface].dev_handle = handle_priv->interface_handle[0].dev_handle;
+		
+		//yomei
+		{
+			HANDLE h_proc=NULL;
+			HANDLE h_out = NULL;
+			h_proc = GetCurrentProcess();
+			DuplicateHandle(h_proc, handle_priv->interface_handle[iface].dev_handle, h_proc, &h_out, 0, FALSE, DUPLICATE_SAME_ACCESS);
+			handle_priv->interface_handle[iface].dev_handle = h_out;
+		}
 	}
 	usbi_dbg(ctx, "claimed interface %u", iface);
 	handle_priv->active_interface = iface;
